@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: read
+      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -21,49 +21,45 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.x"
+          dotnet-version: '8.x'
 
-      - name: Restore
-        run: dotnet restore InventoryService.sln
+      - name: Build with dotnet
+        run: dotnet build --configuration Release
 
-      - name: Build
-        run: dotnet build InventoryService.sln --configuration Release --no-restore
-
-      # ✅ IMPORTANT: Publish the correct project (Maintenance.WebAPI)
-      - name: Publish Maintenance.WebAPI
-        run: dotnet publish Maintenance.WebAPI/Maintenance.WebAPI.csproj -c Release -o "${{ env.DOTNET_ROOT }}/myapp" --no-build
+      - name: dotnet publish
+        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{ env.DOTNET_ROOT }}/myapp
+          path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy:
     runs-on: windows-latest
     needs: build
     permissions:
-      id-token: write
-      contents: read
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: .net-app
-          path: .
-
+      
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_33C7FB5FC4ED4061B9195800C8C8B483 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A7D22A45D0DF40EDA9BF1BC8DB56119A }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BF012F2542F3452E9BE391BF287B1F9B }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_39966FE46E4641CD994E1614DD7DD7F4 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_DCCAD83D99124EEE849E56E35BA4BD66 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_66AF473A63C849C6828E9C600880112C }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "maintainance-webapi-lab4"
-          slot-name: "Production"
+          app-name: 'maintainance-webapi-lab4'
+          slot-name: 'Production'
           package: .
+          
