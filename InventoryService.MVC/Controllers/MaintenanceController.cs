@@ -24,10 +24,26 @@ namespace InventoryService.MVC.Controllers
         {
             var client = _httpClientFactory.CreateClient("MaintenanceApi");
 
-            var repairs = await client.GetFromJsonAsync<List<RepairHistoryViewModel>>(
-                $"api/maintenance/vehicles/{vehicleId}/repairs");
+            try
+            {
+                var response = await client.GetAsync($"api/maintenance/vehicles/{vehicleId}/repairs");
 
-            return View(repairs ?? new List<RepairHistoryViewModel>());
+                if (!response.IsSuccessStatusCode)
+                {
+                    ViewBag.Error = $"API call failed: {(int)response.StatusCode} {response.ReasonPhrase}";
+                    return View(new List<RepairHistoryViewModel>());
+                }
+
+                var repairs = await response.Content.ReadFromJsonAsync<List<RepairHistoryViewModel>>();
+
+                return View(repairs ?? new List<RepairHistoryViewModel>());
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = ex.Message;
+                return View(new List<RepairHistoryViewModel>());
+            }
         }
+
     }
 }
