@@ -1,16 +1,16 @@
-name: Build and deploy ASP.Net Core app to Azure Web App - rl-lab5-inventory-mvc
+name: Lab5 - Deploy InventoryService.MVC
 
 on:
   push:
-    branches:
-      - lab5
+    branches: [ "lab5" ]
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: windows-latest
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -20,41 +20,21 @@ jobs:
         with:
           dotnet-version: "8.x"
 
-      - name: Restore MVC
+      - name: Restore
         run: dotnet restore InventoryService.MVC/InventoryService.MVC.csproj
 
-      - name: Build MVC
-        run: dotnet build InventoryService.MVC/InventoryService.MVC.csproj --configuration Release --no-restore
+      - name: Build
+        run: dotnet build InventoryService.MVC/InventoryService.MVC.csproj -c Release --no-restore
 
-      - name: Publish MVC
+      - name: Publish
         run: dotnet publish InventoryService.MVC/InventoryService.MVC.csproj -c Release -o ${{ github.workspace }}\published --no-build
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: published-mvc
-          path: ${{ github.workspace }}\published
-
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: published-mvc
-          path: published
 
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_LAB5_MVC_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_LAB5_MVC_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_LAB5_MVC_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_<PUT_MVC_CLIENTID_SUFFIX_HERE> }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F7A660ABC2FB4A7E9F48B841DDAAC476 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_387E06EF9F64423AB7B5A11C3EF907F5 }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
