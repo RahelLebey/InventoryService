@@ -5,4 +5,5 @@ namespace Maintenance.WebAPI.Services;
 public interface IRepairHistoryService
 {
     List<RepairHistoryDto> GetByVehicleId(int vehicleId);
+    RepairHistoryDto AddRepair(int vehicleId, RepairHistoryDto repair);
 }
