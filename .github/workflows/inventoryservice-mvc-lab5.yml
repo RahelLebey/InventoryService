@@ -1,0 +1,64 @@
+name: Build and deploy ASP.Net Core app to Azure Web App - rl-lab5-inventory-mvc
+
+on:
+  push:
+    branches:
+      - lab5
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.x"
+
+      - name: Restore MVC
+        run: dotnet restore InventoryService.MVC/InventoryService.MVC.csproj
+
+      - name: Build MVC
+        run: dotnet build InventoryService.MVC/InventoryService.MVC.csproj --configuration Release --no-restore
+
+      - name: Publish MVC
+        run: dotnet publish InventoryService.MVC/InventoryService.MVC.csproj -c Release -o ${{ github.workspace }}\published --no-build
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: published-mvc
+          path: ${{ github.workspace }}\published
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: published-mvc
+          path: published
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_LAB5_MVC_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_LAB5_MVC_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_LAB5_MVC_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "rl-lab5-inventory-mvc-dad4b8g4hheyddft"
+          slot-name: "Production"
+          package: published
