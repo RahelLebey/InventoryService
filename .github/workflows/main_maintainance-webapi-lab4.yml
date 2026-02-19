@@ -1,19 +1,16 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy ASP.Net Core app to Azure Web App - maintainance-webapi-lab4
+name: Lab5 - Deploy Maintenance.WebAPI
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "lab5" ]
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: windows-latest
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -23,46 +20,25 @@ jobs:
         with:
           dotnet-version: "8.x"
 
-      - name: Restore solution
-        run: dotnet restore InventoryService.sln
+      - name: Restore
+        run: dotnet restore Maintenance.WebAPI/Maintenance.WebAPI.csproj
 
-      - name: Build solution
-        run: dotnet build InventoryService.sln --configuration Release --no-restore
+      - name: Build
+        run: dotnet build Maintenance.WebAPI/Maintenance.WebAPI.csproj -c Release --no-restore
 
-      - name: Publish Maintenance.WebAPI
+      - name: Publish
         run: dotnet publish Maintenance.WebAPI/Maintenance.WebAPI.csproj -c Release -o ${{ github.workspace }}\published --no-build
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: published-app
-          path: ${{ github.workspace }}\published
-
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: published-app
-          path: published
 
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_39966FE46E4641CD994E1614DD7DD7F4 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_DCCAD83D99124EEE849E56E35BA4BD66 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_66AF473A63C849C6828E9C600880112C }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_<PUT_WEBAPI_CLIENTID_SUFFIX_HERE> }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_<PUT_WEBAPI_TENANTID_SUFFIX_HERE> }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_FA8CDD130FDD4310A3C855384F0AA0FA }}
 
       - name: Deploy to Azure Web App
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "maintainance-webapi-lab4"
+          app-name: "rl-lab5-maintenance-api-hshuc0e9cchkcje4"
           slot-name: "Production"
           package: published
